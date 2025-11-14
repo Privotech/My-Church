@@ -1,0 +1,216 @@
+/* General Body Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Navigation Bar */
+.navbar {
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    padding: 1rem;
+}
+
+.navbar-brand img {
+    width: 100px;
+    border-radius: 50%;
+}
+
+.navbar-nav .nav-link {
+    color: #fff !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin: 0 10px;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #f0f0f0 !important;
+}
+
+/* Header Section */
+.header {
+    background: url('image/DALL·E 2025-03-17 15.40.37 - A blurred background image of a large congregation in a church setting. The image should have a spiritual ambiance with a mix of blue and orange light.webp') no-repeat center center/cover;
+    color: #fff;
+    padding: 100px 0;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 3.5rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.header p {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+}
+
+.header .btn {
+    background-color: #ff6347;
+    color: #fff;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.header .btn:hover {
+    background-color: #ff4500;
+}
+
+/* Main Content Sections */
+.section {
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.section-light {
+    background-color: #fff;
+}
+
+.section-dark {
+    background-color: #333;
+    color: #fff;
+}
+
+.section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+}
+
+/* About Us Section */
+.about-us {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 50px;
+}
+
+.about-us img {
+    width: 400px;
+    border-radius: 10px;
+}
+
+.about-us-content {
+    max-width: 600px;
+    text-align: left;
+}
+
+/* Values Section */
+.values {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.value-item {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 300px;
+}
+
+.value-item h3 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+/* Events Section */
+.events {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+}
+
+.events img {
+    width: 500px;
+    border-radius: 10px;
+}
+
+.events-content {
+    max-width: 500px;
+    text-align: left;
+}
+
+/* Life Group Section */
+.life-group {
+    background: linear-gradient(to right, #ff7e5f, #feb47b);
+    color: #fff;
+}
+
+.life-group .btn {
+    background-color: #fff;
+    color: #333;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.life-group .btn:hover {
+    background-color: #f0f0f0;
+}
+
+/* Footer */
+footer {
+    background: #333;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.footer-content img {
+    width: 80px;
+    margin-bottom: 10px;
+}
+
+.social-icons a {
+    color: #fff;
+    margin: 0 10px;
+    font-size: 1.5rem;
+    transition: color 0.3s ease;
+}
+
+.social-icons a:hover {
+    color: #ff6347;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2.5rem;
+    }
+
+    .header p {
+        font-size: 1.2rem;
+    }
+
+    .about-us, .events {
+        flex-direction: column;
+    }
+
+    .about-us img, .events img {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .values {
+        flex-direction: column;
+        align-items: center;
+    }
+}
