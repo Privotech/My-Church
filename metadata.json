@@ -1,0 +1,8 @@
+{
+  "name": "All Soul's Winning for Saviour Global Ministry",
+  "description": "Website for All Soul's Winning for Saviour Global Ministry",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
