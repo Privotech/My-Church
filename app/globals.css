@@ -75,6 +75,31 @@ body {
   flex-direction: column;
 }
 
+.animated-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.2;
+  background: linear-gradient(270deg, rgba(255, 107, 107, 0.18), rgba(107, 156, 247, 0.18));
+  background-size: 200% 200%;
+  animation: background-gradient 15s ease infinite;
+}
+
+@keyframes background-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 main {
   flex: 1;
 }
@@ -922,4 +947,3 @@ img {
 .team-member-portrait-frame:hover .team-member-portrait-img {
   transform: scale(1.05);
 }
-

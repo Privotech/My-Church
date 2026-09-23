@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AnimatedBackground from '@/components/AnimatedBackground';
 import { churchInfo } from '@/lib/church-data';
 
 const sansFont = Plus_Jakarta_Sans({
@@ -90,6 +91,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <AnimatedBackground />
         <Navbar />
         <main id="main-content">{children}</main>
         <Footer />
