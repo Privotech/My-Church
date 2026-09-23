@@ -1,0 +1,19 @@
+{
+  "name": "animated-bg-church-website",
+  "version": "1.0.0",
+  "description": "A website for All Soul's Winning for Saviour Global Ministry with an animated background.",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "live-server src"
+  },
+  "keywords": [
+    "church",
+    "website",
+    "animated-background"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "live-server": "^1.2.1"
+  }
+}

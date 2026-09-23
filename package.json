@@ -1,0 +1,31 @@
+{
+  "name": "all-souls-winning-for-saviour-global-ministry",
+  "version": "1.0.0",
+  "description": "Website for All Soul's Winning for Saviour Global Ministry",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "prisma generate && next build",
+    "start": "next start -p 3000",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@neon/config": "^1.7.2",
+    "@neon/env": "^1.4.3",
+    "@prisma/client": "^6.4.1",
+    "lucide-react": "^1.47.0",
+    "next": "^15.2.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^10.11.0",
+    "eslint-config-next": "^16.3.5",
+    "prisma": "^6.4.1",
+    "typescript": "^5.7.0"
+  }
+}

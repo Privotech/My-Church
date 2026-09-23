@@ -30,10 +30,8 @@ export default function AnimatedBackground() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext('2d');
-    if (!context) return;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return;
 
     let animationFrame = 0;
     let particles: Particle[] = [];
@@ -52,7 +50,6 @@ export default function AnimatedBackground() {
 
     const animate = () => {
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
       particles.forEach((particle, index) => {
         particle.x += particle.speedX;
         particle.y += particle.speedY;
@@ -83,11 +80,5 @@ export default function AnimatedBackground() {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      className="animated-background"
-      aria-hidden="true"
-    />
-  );
+  return <canvas ref={canvasRef} className="animated-background" aria-hidden="true" />;
 }

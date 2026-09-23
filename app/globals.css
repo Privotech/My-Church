@@ -63,6 +63,12 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -70,7 +76,7 @@ body {
   background-color: var(--canvas-bg);
   color: var(--text-primary);
   line-height: 1.65;
-  min-height: 100vh;
+  min-height: 120vh;
   display: flex;
   flex-direction: column;
 }
@@ -143,7 +149,7 @@ img {
 /* Layout Containers */
 .container {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1.5rem;
@@ -225,12 +231,14 @@ img {
   z-index: 1000;
   border-bottom: 1px solid rgba(197, 155, 39, 0.25);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  width: 100%;
 }
 
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
   height: 80px;
 }
 
@@ -238,6 +246,7 @@ img {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  flex: 0 0 auto;
   text-decoration: none;
 }
 
@@ -274,8 +283,15 @@ img {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: flex-end;
+  gap: 0.7rem;
   list-style: none;
+}
+
+.nav-desktop {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0 0.5rem;
 }
 
 .nav-link {
@@ -314,6 +330,7 @@ img {
 .nav-cta-group {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 0.75rem;
 }
 
@@ -731,7 +748,23 @@ img {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
+  .nav-link {
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+    font-size: 0.875rem;
+  }
+
+  .brand-name {
+    font-size: 1rem;
+  }
+
+  .brand-sub {
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 1020px) {
   .nav-links, .nav-cta-group {
     display: none;
   }
@@ -744,9 +777,12 @@ img {
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: 80px;
+    top: 100%;
     left: 0;
     right: 0;
+    width: 100%;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
     background: var(--primary-navy);
     padding: 1.5rem;
     border-bottom: 2px solid var(--accent-gold);
@@ -770,6 +806,42 @@ img {
 }
 
 @media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .nav-container {
+    min-height: 68px;
+    height: auto;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .brand-wrapper {
+    gap: 0.55rem;
+    min-width: 0;
+  }
+
+  .brand-logo,
+  .church-logo-img {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .brand-name {
+    font-size: 0.9rem;
+  }
+
+  .brand-sub {
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+  }
+
+  .nav-menu-mobile {
+    max-height: calc(100vh - 68px);
+  }
+
   .top-bar-inner {
     justify-content: center;
     text-align: center;
