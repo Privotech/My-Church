@@ -41,6 +41,62 @@
 			"command": "git checkout origin/master -- components lib",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Restore public image assets",
+			"type": "shell",
+			"command": "git checkout origin/master -- public/image",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restore Next public assets",
+			"type": "shell",
+			"command": "git checkout origin/master -- src/image src/public/image; New-Item -ItemType Directory -Force public/image | Out-Null; Copy-Item -Path src/image/* -Destination public/image -Recurse -Force; Copy-Item -Path src/public/image/* -Destination public/image -Recurse -Force",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Copy Next public assets",
+			"type": "shell",
+			"command": "git checkout origin/master -- src/image src/public/image && if not exist public\\image mkdir public\\image && xcopy /E /I /Y src\\image public\\image && xcopy /E /I /Y src\\public\\image public\\image",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Complete public image assets",
+			"type": "shell",
+			"command": "robocopy src\\public\\image public\\image /E /NFL /NDL /NJH /NJS /NC /NS; copy /Y \"src\\image\\DALL·E 2025-03-17 15.40.37 - A blurred background image of a large congregation in a church setting. The image should have a spiritual ambiance with a mix of blue and orange light.webp\" public\\image\\ >nul; exit /b 0",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Copy missing image assets",
+			"type": "shell",
+			"command": "copy /Y \"src\\public\\image\\church_prayer_vigil.jpg\" \"public\\image\\church_prayer_vigil.jpg\" && copy /Y \"src\\public\\image\\church_welcome_entrance.jpg\" \"public\\image\\church_welcome_entrance.jpg\" && copy /Y \"src\\public\\image\\sunday_school_children.jpg\" \"public\\image\\sunday_school_children.jpg\" && copy /Y \"src\\public\\image\\thanksgiving_celebration.jpg\" \"public\\image\\thanksgiving_celebration.jpg\" && copy /Y \"src\\public\\image\\download.jpeg\" \"public\\image\\download.jpeg\" && copy /Y \"src\\public\\image\\download (1).jpeg\" \"public\\image\\download (1).jpeg\" && copy /Y \"src\\public\\image\\download (2).jpeg\" \"public\\image\\download (2).jpeg\" && copy /Y \"src\\public\\image\\images.jpeg\" \"public\\image\\images.jpeg\" && copy /Y \"src\\public\\image\\images (1).jpeg\" \"public\\image\\images (1).jpeg\" && copy /Y \"src\\public\\image\\Oyegbile_Privilege_a_picture_of_crowd_with_opacity_blue_colour_1befed5e-71b2-49ad-9c5a-594df293a3bf.png\" \"public\\image\\Oyegbile_Privilege_a_picture_of_crowd_with_opacity_blue_colour_1befed5e-71b2-49ad-9c5a-594df293a3bf.png\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Copy hero background asset",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const src=fs.readdirSync('src/image').find(f=>f.startsWith('DALL'));if(!src)process.exit(1);fs.copyFileSync('src/image/'+src,'public/image/'+src);console.log(src)\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Clear Next build cache",
+			"type": "shell",
+			"command": "if exist .next rmdir /s /q .next",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Shorten hero image filename",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const dir='public/image';const src=fs.readdirSync(dir).find(f=>f.startsWith('DALL'));if(!src)process.exit(1);fs.renameSync(dir+'/'+src,dir+'/hero-background.webp')\"",
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }
