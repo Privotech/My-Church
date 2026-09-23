@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import PageHeader from '@/components/PageHeader';
 import SermonList from '@/components/SermonList';
+import SocialShareWidget from '@/components/SocialShareWidget';
 import { getSermons } from '@/lib/data-service';
 
 export const metadata: Metadata = {
@@ -22,6 +23,13 @@ export default async function SermonsPage() {
 
       <section className="section section-light" aria-labelledby="sermons-heading">
         <div className="container">
+          <SocialShareWidget
+            title="Share Inspiring Sermons With Family & Friends"
+            description="Help bless someone today by sharing our spirit-filled messages and audio teachings across your social circles."
+            url="/sermons"
+            layout="banner"
+          />
+
           <h2 id="sermons-heading">Recent Sermons</h2>
           <SermonList initialSermons={sermons} />
         </div>

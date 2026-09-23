@@ -1,6 +1,7 @@
 import React from 'react';
 import { SermonItem } from '@/lib/types';
 import { Play, Calendar, User, BookOpen, Volume2 } from 'lucide-react';
+import SocialShareWidget from '@/components/SocialShareWidget';
 
 interface SermonCardProps {
   sermon: SermonItem;
@@ -114,6 +115,13 @@ export default function SermonCard({ sermon }: SermonCardProps) {
           </a>
         )}
       </div>
+
+      <SocialShareWidget
+        title={`Sermon: "${sermon.title}" by ${sermon.speaker}`}
+        description={`Listen to "${sermon.title}" by ${sermon.speaker} at All Soul’s Winning for Saviour Global Ministry.`}
+        url="/sermons"
+        layout="compact"
+      />
     </article>
   );
 }

@@ -40,6 +40,7 @@ export default function Navbar() {
     { href: '/about', label: 'About Us' },
     { href: '/programs', label: 'Programs' },
     { href: '/sermons', label: 'Sermons' },
+    { href: '/gallery', label: 'Gallery' },
     { href: '/team', label: 'Our Team' },
     { href: '/visit', label: 'Plan a Visit' },
     { href: '/contact', label: 'Contact & Prayer' },
@@ -85,6 +86,7 @@ export default function Navbar() {
                 height={56}
                 priority
                 style={{ objectFit: 'contain' }}
+                className="church-logo-img"
               />
             </div>
             <div className="brand-text">

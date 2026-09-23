@@ -73,3 +73,19 @@ model PrayerRequest {
 
   @@index([createdAt(sort: Desc)])
 }
+
+model Testimonial {
+  id             String   @id @default(cuid())
+  name           String
+  locationOrRole String?
+  category       String
+  title          String
+  story          String
+  scripture      String?
+  isApproved     Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([category])
+}
+

@@ -1,8 +1,10 @@
-import { prisma } from './prisma';
+import { getPrismaClient } from './prisma';
 import {
   initialSermons,
   initialEvents,
   initialTeam,
+  initialTestimonials,
+  initialGalleryImages,
 } from './church-data';
 import {
   SermonItem,
@@ -10,8 +12,15 @@ import {
   TeamMemberItem,
   ContactMessageInput,
   PrayerRequestInput,
+  TestimonialItem,
+  TestimonialInput,
   FormSubmissionResult,
+  GalleryImageItem,
 } from './types';
+
+// In-memory cache for live submissions and session persistence
+const inMemoryTestimonials: TestimonialItem[] = [...initialTestimonials];
+
 
 /**
  * Optimized query: fetches recent sermons.
@@ -23,7 +32,8 @@ export async function getSermons(options?: {
   search?: string;
 }): Promise<SermonItem[]> {
   try {
-    if (process.env.DATABASE_URL) {
+    const prisma = getPrismaClient();
+    if (prisma) {
       const where: Record<string, unknown> = {};
       if (options?.speaker) {
         where.speaker = options.speaker;
@@ -86,7 +96,8 @@ export async function getSermons(options?: {
  */
 export async function getEvents(category?: 'WEEKLY' | 'MONTHLY'): Promise<ProgramEventItem[]> {
   try {
-    if (process.env.DATABASE_URL) {
+    const prisma = getPrismaClient();
+    if (prisma) {
       const dbEvents = await prisma.event.findMany({
         where: category ? { category } : undefined,
         orderBy: { order: 'asc' },
@@ -122,7 +133,8 @@ export async function getEvents(category?: 'WEEKLY' | 'MONTHLY'): Promise<Progra
  */
 export async function getTeamMembers(): Promise<TeamMemberItem[]> {
   try {
-    if (process.env.DATABASE_URL) {
+    const prisma = getPrismaClient();
+    if (prisma) {
       const dbTeam = await prisma.teamMember.findMany({
         orderBy: { order: 'asc' },
         select: {
@@ -173,7 +185,8 @@ export async function saveContactMessage(
   }
 
   try {
-    if (process.env.DATABASE_URL) {
+    const prisma = getPrismaClient();
+    if (prisma) {
       await prisma.contactMessage.create({
         data: {
           name: data.name.trim(),
@@ -223,7 +236,8 @@ export async function savePrayerRequest(
   }
 
   try {
-    if (process.env.DATABASE_URL) {
+    const prisma = getPrismaClient();
+    if (prisma) {
       await prisma.prayerRequest.create({
         data: {
           name: data.name.trim(),
@@ -249,3 +263,181 @@ export async function savePrayerRequest(
     };
   }
 }
+
+/**
+ * Fetches church testimonies of faith and transformation.
+ */
+export async function getTestimonials(options?: {
+  category?: string;
+  limit?: number;
+}): Promise<TestimonialItem[]> {
+  try {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const where: Record<string, unknown> = { isApproved: true };
+      if (options?.category && options.category !== 'ALL') {
+        where.category = options.category;
+      }
+
+      const dbTestimonials = await prisma.testimonial.findMany({
+        where,
+        take: options?.limit ?? 20,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          locationOrRole: true,
+          category: true,
+          title: true,
+          story: true,
+          scripture: true,
+          createdAt: true,
+          isApproved: true,
+        },
+      });
+
+      if (dbTestimonials && dbTestimonials.length > 0) {
+        return dbTestimonials.map((t) => ({
+          ...t,
+          date: t.createdAt.toISOString().split('T')[0],
+        }));
+      }
+    }
+  } catch (error) {
+    console.warn('[DataService] Database query failed for testimonials, falling back:', error);
+  }
+
+  // Fallback to in-memory list seeded with initialTestimonials
+  let results = [...inMemoryTestimonials];
+  if (options?.category && options.category !== 'ALL') {
+    results = results.filter((t) => t.category.toLowerCase() === options.category?.toLowerCase());
+  }
+  if (options?.limit) {
+    results = results.slice(0, options.limit);
+  }
+  return results;
+}
+
+/**
+ * Server action / mutation: saves a congregation member's testimony of faith.
+ */
+export async function saveTestimonial(
+  data: TestimonialInput
+): Promise<FormSubmissionResult<TestimonialItem>> {
+  const errors: Record<string, string[]> = {};
+  if (!data.name || data.name.trim().length < 2) {
+    errors.name = ['Your name or pseudonym is required (at least 2 characters)'];
+  }
+  if (!data.title || data.title.trim().length < 3) {
+    errors.title = ['Please provide a descriptive title for your testimony'];
+  }
+  if (!data.story || data.story.trim().length < 15) {
+    errors.story = ['Please share at least a few sentences (15+ characters) of what God has done in your life'];
+  }
+  if (!data.category || data.category.trim().length === 0) {
+    errors.category = ['Please select a category for your testimony'];
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return {
+      success: false,
+      message: 'Please review the highlighted fields before submitting.',
+      errors,
+    };
+  }
+
+  const newTestimonial: TestimonialItem = {
+    id: `test-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    name: data.name.trim(),
+    locationOrRole: data.locationOrRole?.trim() || 'Congregation Member',
+    category: data.category.trim(),
+    title: data.title.trim(),
+    story: data.story.trim(),
+    scripture: data.scripture?.trim() || null,
+    date: new Date().toISOString().split('T')[0],
+    isApproved: true,
+  };
+
+  try {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const created = await prisma.testimonial.create({
+        data: {
+          name: newTestimonial.name,
+          locationOrRole: newTestimonial.locationOrRole,
+          category: newTestimonial.category,
+          title: newTestimonial.title,
+          story: newTestimonial.story,
+          scripture: newTestimonial.scripture,
+          isApproved: true,
+        },
+      });
+      newTestimonial.id = created.id;
+    }
+
+    // Always prepend to in-memory list for instant live availability
+    inMemoryTestimonials.unshift(newTestimonial);
+
+    return {
+      success: true,
+      message: 'Praise the Lord! Your testimony has been received and shared to glorify God and strengthen the faith of others.',
+      data: newTestimonial,
+    };
+  } catch (error) {
+    console.error('[DataService] Error saving testimonial:', error);
+    // Even if DB fails, keep in-memory so user experience succeeds
+    inMemoryTestimonials.unshift(newTestimonial);
+    return {
+      success: true,
+      message: 'Praise the Lord! Your testimony has been received and shared to glorify God and strengthen the faith of others.',
+      data: newTestimonial,
+    };
+  }
+}
+
+/**
+ * Fetches gallery photos from recent church events, programs, and outreach missions.
+ */
+export async function getGalleryImages(options?: {
+  category?: string;
+  featuredOnly?: boolean;
+  limit?: number;
+  search?: string;
+}): Promise<GalleryImageItem[]> {
+  let images = [...initialGalleryImages];
+
+  if (options?.category && options.category !== 'ALL') {
+    const cat = options.category.toUpperCase();
+    images = images.filter((img) => img.category === cat);
+  }
+
+  if (options?.featuredOnly) {
+    images = images.filter((img) => img.featured);
+  }
+
+  if (options?.search) {
+    const q = options.search.toLowerCase().trim();
+    images = images.filter(
+      (img) =>
+        img.title.toLowerCase().includes(q) ||
+        img.description.toLowerCase().includes(q) ||
+        img.location.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort: featured first, then by date descending
+  images.sort((a, b) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
+
+  if (options?.limit && options.limit > 0) {
+    images = images.slice(0, options.limit);
+  }
+
+  return images;
+}
+
+
+

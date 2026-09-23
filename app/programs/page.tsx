@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
+import SocialShareWidget from '@/components/SocialShareWidget';
 import { getEvents } from '@/lib/data-service';
 import {
   Calendar,
@@ -66,6 +67,13 @@ export default async function ProgramsPage() {
           ========================================================================= */}
       <section className="section section-white" aria-labelledby="weekly-heading">
         <div className="container">
+          <SocialShareWidget
+            title="Invite Loved Ones to Our Worship Services"
+            description="Spread the good news! Share our weekly service schedule, prayer vigils, and deliverance programs on WhatsApp, Facebook, or Telegram."
+            url="/programs"
+            layout="banner"
+          />
+
           <div className="section-header">
             <span className="section-eyebrow">Consistent Spiritual Growth</span>
             <h2 className="section-title" id="weekly-heading">
@@ -112,6 +120,13 @@ export default async function ProgramsPage() {
                   <MapPin size={15} style={{ color: 'var(--accent-gold)' }} />
                   <span>Ayedire Worship Center</span>
                 </div>
+
+                <SocialShareWidget
+                  title={`ASWS Church Program: ${prog.title}`}
+                  description={`Join us for ${prog.title} (${prog.dayOrFrequency} - ${prog.time}) at All Soul’s Winning for Saviour Global Ministry, Ogbomosho.`}
+                  url="/programs"
+                  layout="compact"
+                />
               </article>
             ))}
           </div>
@@ -223,6 +238,13 @@ export default async function ProgramsPage() {
                   <strong>Open to Everyone:</strong> Fasting and intense prayers. Pastoral counseling and
                   deliverance ministry take place throughout this program.
                 </div>
+
+                <SocialShareWidget
+                  title={`ASWS Special Deliverance & Vigil: ${prog.title}`}
+                  description={`Special Monthly Program: ${prog.title} (${prog.dayOrFrequency} at ${prog.time}) at All Soul’s Winning for Saviour Global Ministry.`}
+                  url="/programs"
+                  layout="compact"
+                />
               </article>
             ))}
           </div>

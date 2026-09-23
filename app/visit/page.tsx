@@ -248,19 +248,20 @@ export default function VisitPage() {
 
               <div style={{ position: 'relative' }}>
                 <div
+                  className="church-photo-frame"
                   style={{
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    boxShadow: 'var(--shadow-lg)',
-                    border: '1px solid var(--border-subtle)',
+                    width: '100%',
+                    aspectRatio: '16/11',
                   }}
                 >
                   <Image
-                    src="/image/download (2).jpeg"
-                    alt="Sanctuary entrance at ASWS Global Ministry"
-                    width={540}
-                    height={380}
-                    style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                    src="/image/church_welcome_entrance.jpg"
+                    alt="Sanctuary entrance and welcoming grounds at ASWS Global Ministry"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 540px"
+                    style={{ objectFit: 'cover' }}
+                    className="church-photo-img"
+                    referrerPolicy="no-referrer"
                   />
                 </div>
               </div>

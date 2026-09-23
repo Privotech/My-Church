@@ -1,7 +1,8 @@
 'use server';
 
-import { saveContactMessage, savePrayerRequest } from '@/lib/data-service';
-import { FormSubmissionResult } from '@/lib/types';
+import { saveContactMessage, savePrayerRequest, saveTestimonial } from '@/lib/data-service';
+import { FormSubmissionResult, TestimonialItem } from '@/lib/types';
+
 
 export async function submitContactAction(
   prevState: FormSubmissionResult | null,
@@ -40,3 +41,25 @@ export async function submitPrayerRequestAction(
     isPrivate,
   });
 }
+
+export async function submitTestimonialAction(
+  prevState: FormSubmissionResult<TestimonialItem> | null,
+  formData: FormData
+): Promise<FormSubmissionResult<TestimonialItem>> {
+  const name = formData.get('name') as string;
+  const locationOrRole = formData.get('locationOrRole') as string;
+  const category = formData.get('category') as string;
+  const title = formData.get('title') as string;
+  const story = formData.get('story') as string;
+  const scripture = formData.get('scripture') as string;
+
+  return await saveTestimonial({
+    name,
+    locationOrRole,
+    category,
+    title,
+    story,
+    scripture,
+  });
+}
+

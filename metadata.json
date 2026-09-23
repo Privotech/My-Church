@@ -1,8 +1,9 @@
 {
   "name": "All Soul's Winning for Saviour Global Ministry",
-  "description": "Website for All Soul's Winning for Saviour Global Ministry",
+  "description": "Official website for All Soul's Winning for Saviour Global Ministry in Ogbomosho, Nigeria. Featuring worship services, soul-winning missions, pastoral care, and member testimonies of faith and transformation.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
 }
+

@@ -20,6 +20,8 @@ export interface ChurchInfo {
     facebook?: string;
     youtube?: string;
     instagram?: string;
+    whatsapp?: string;
+    telegram?: string;
   };
   bankDetails: {
     bankName: string;
@@ -74,8 +76,45 @@ export interface PrayerRequestInput {
   isPrivate?: boolean;
 }
 
-export interface FormSubmissionResult {
+export interface TestimonialItem {
+  id: string;
+  name: string;
+  locationOrRole?: string | null;
+  category: string;
+  title: string;
+  story: string;
+  scripture?: string | null;
+  date: string;
+  isApproved?: boolean;
+}
+
+export interface TestimonialInput {
+  name: string;
+  locationOrRole?: string;
+  category: string;
+  title: string;
+  story: string;
+  scripture?: string;
+}
+
+export interface FormSubmissionResult<T = unknown> {
   success: boolean;
   message: string;
   errors?: Record<string, string[]>;
+  data?: T;
 }
+
+export type GalleryCategory = 'ALL' | 'EVENTS' | 'PROGRAMS' | 'OUTREACH' | 'WORSHIP';
+
+export interface GalleryImageItem {
+  id: string;
+  title: string;
+  category: 'EVENTS' | 'PROGRAMS' | 'OUTREACH' | 'WORSHIP';
+  description: string;
+  imageUrl: string;
+  date: string;
+  location: string;
+  featured?: boolean;
+}
+
+

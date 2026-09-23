@@ -18,6 +18,9 @@ const serifFont = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.APP_URL || 'https://ais-pre-7edhfeeqwia26rk36zjojd-335137421450.europe-west2.run.app'
+  ),
   title: {
     default: "ALL SOUL'S WINNING FOR SAVIOUR GLOBAL MINISTRY",
     template: "%s | ALL SOUL'S WINNING FOR SAVIOUR GLOBAL MINISTRY",

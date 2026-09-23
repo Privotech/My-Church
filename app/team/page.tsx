@@ -95,16 +95,11 @@ export default async function TeamPage() {
               >
                 <div style={{ textAlign: 'center' }}>
                   <div
+                    className="pastor-portrait-frame"
                     style={{
-                      position: 'relative',
                       width: '280px',
                       height: '340px',
                       margin: '0 auto',
-                      borderRadius: '16px',
-                      overflow: 'hidden',
-                      border: '2px solid var(--border-subtle)',
-                      boxShadow: 'var(--shadow-lg)',
-                      background: '#ffffff',
                     }}
                   >
                     <Image
@@ -112,6 +107,8 @@ export default async function TeamPage() {
                       alt={seniorPastor.name}
                       fill
                       style={{ objectFit: 'contain' }}
+                      className="pastor-portrait-img"
+                      priority
                     />
                   </div>
                 </div>
@@ -190,14 +187,10 @@ export default async function TeamPage() {
                   <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', marginBottom: '1.25rem' }}>
                     {member.imageUrl ? (
                       <div
+                        className="team-member-portrait-frame"
                         style={{
-                          position: 'relative',
                           width: '90px',
                           height: '90px',
-                          borderRadius: '14px',
-                          overflow: 'hidden',
-                          border: '2px solid var(--border-subtle)',
-                          flexShrink: 0,
                         }}
                       >
                         <Image
@@ -205,23 +198,21 @@ export default async function TeamPage() {
                           alt={member.name}
                           fill
                           style={{ objectFit: 'cover' }}
+                          className="team-member-portrait-img"
                         />
                       </div>
                     ) : (
                       <div
+                        className="team-member-portrait-frame"
                         style={{
                           width: '90px',
                           height: '90px',
-                          borderRadius: '14px',
-                          background: 'var(--surface-muted)',
-                          border: '2px solid var(--border-subtle)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: 'var(--accent-gold)',
                           fontSize: '2rem',
                           fontWeight: 'bold',
-                          flexShrink: 0,
                         }}
                         aria-hidden="true"
                       >

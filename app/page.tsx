@@ -3,6 +3,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { churchInfo } from '@/lib/church-data';
+import { getTestimonials, getGalleryImages } from '@/lib/data-service';
+import TestimonialSection from '@/components/TestimonialSection';
+import PhotoGallery from '@/components/PhotoGallery';
 import {
   Calendar,
   Clock,
@@ -16,7 +19,13 @@ import {
   Sparkles,
   PhoneCall,
   CheckCircle2,
+  Video,
+  MessageCircle,
+  Camera,
+  Send,
+  Share2,
 } from 'lucide-react';
+
 
 export const metadata: Metadata = {
   title: "All Soul's Winning for Saviour Global Ministry | Faith, Worship & Purpose",
@@ -51,8 +60,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [testimonials, galleryImages] = await Promise.all([
+    getTestimonials(),
+    getGalleryImages({ limit: 8 }),
+  ]);
+
   return (
+
     <>
       {/* =========================================================================
           HERO SECTION
@@ -138,7 +153,7 @@ export default function HomePage() {
                 justifyContent: 'center',
                 gap: '1rem',
                 flexWrap: 'wrap',
-                marginBottom: '4rem',
+                marginBottom: '2.5rem',
               }}
             >
               <Link href="/visit" className="btn btn-primary btn-lg">
@@ -153,6 +168,291 @@ export default function HomePage() {
                 <Heart size={18} />
                 <span>Give / Support</span>
               </Link>
+            </div>
+
+            {/* =========================================================================
+                PROMINENT SOCIAL MEDIA & COMMUNITY ENGAGEMENT (HERO)
+                ========================================================================= */}
+            <div
+              style={{
+                background: 'rgba(15, 23, 42, 0.78)',
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(197, 155, 39, 0.45)',
+                borderRadius: '16px',
+                padding: '1.5rem 1.75rem',
+                margin: '0 auto 3.5rem',
+                maxWidth: '860px',
+                boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+              }}
+              aria-label="Online Church Community & Social Channels"
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  marginBottom: '1rem',
+                  paddingBottom: '0.85rem',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <span
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      backgroundColor: '#22c55e',
+                      boxShadow: '0 0 10px #22c55e',
+                      display: 'inline-block',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      color: '#ffffff',
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Connect With Us Online
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--accent-gold-light)', fontWeight: 600 }}>
+                  Live Streams &bull; 24/7 Prayer Line &bull; Worldwide Community
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: '0.75rem',
+                }}
+              >
+                {/* YouTube */}
+                <a
+                  href={churchInfo.socialLinks.youtube}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    textDecoration: 'none',
+                    textAlign: 'left',
+                  }}
+                  className="social-btn-hover"
+                  title="Watch Sunday Service on YouTube"
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                      color: '#ff4d4d',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Video size={17} />
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ color: '#ffffff', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2 }}>
+                      YouTube
+                    </div>
+                    <div style={{ color: 'var(--accent-gold-light)', fontSize: '0.7rem', fontWeight: 600 }}>
+                      Live Streams
+                    </div>
+                  </div>
+                </a>
+
+                {/* WhatsApp */}
+                <a
+                  href={churchInfo.socialLinks.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '10px',
+                    background: 'rgba(37, 211, 102, 0.1)',
+                    border: '1px solid rgba(37, 211, 102, 0.35)',
+                    textDecoration: 'none',
+                    textAlign: 'left',
+                  }}
+                  className="social-btn-hover"
+                  title="24/7 WhatsApp Pastoral Prayer Line"
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(37, 211, 102, 0.25)',
+                      color: '#25D366',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <MessageCircle size={17} />
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ color: '#ffffff', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2 }}>
+                      WhatsApp
+                    </div>
+                    <div style={{ color: '#86efac', fontSize: '0.7rem', fontWeight: 600 }}>
+                      Prayer Line
+                    </div>
+                  </div>
+                </a>
+
+                {/* Facebook */}
+                <a
+                  href={churchInfo.socialLinks.facebook}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    textDecoration: 'none',
+                    textAlign: 'left',
+                  }}
+                  className="social-btn-hover"
+                  title="Follow ASWS Global Ministry on Facebook"
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(24, 119, 242, 0.2)',
+                      color: '#60a5fa',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Users size={17} />
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ color: '#ffffff', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2 }}>
+                      Facebook
+                    </div>
+                    <div style={{ color: '#93c5fd', fontSize: '0.7rem', fontWeight: 600 }}>
+                      Community
+                    </div>
+                  </div>
+                </a>
+
+                {/* Instagram */}
+                <a
+                  href={churchInfo.socialLinks.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    textDecoration: 'none',
+                    textAlign: 'left',
+                  }}
+                  className="social-btn-hover"
+                  title="Photos and Youth Ministry Moments on Instagram"
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(225, 48, 108, 0.2)',
+                      color: '#f472b6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Camera size={17} />
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ color: '#ffffff', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2 }}>
+                      Instagram
+                    </div>
+                    <div style={{ color: '#fbcfe8', fontSize: '0.7rem', fontWeight: 600 }}>
+                      Moments
+                    </div>
+                  </div>
+                </a>
+
+                {/* Telegram */}
+                <a
+                  href={churchInfo.socialLinks.telegram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '10px',
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    textDecoration: 'none',
+                    textAlign: 'left',
+                  }}
+                  className="social-btn-hover"
+                  title="Telegram Audio Sermons & Devotionals"
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      backgroundColor: 'rgba(34, 158, 217, 0.2)',
+                      color: '#38bdf8',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Send size={17} />
+                  </div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ color: '#ffffff', fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2 }}>
+                      Telegram
+                    </div>
+                    <div style={{ color: '#bae6fd', fontSize: '0.7rem', fontWeight: 600 }}>
+                      Devotionals
+                    </div>
+                  </div>
+                </a>
+              </div>
             </div>
 
             {/* Quick Highlights Grid */}
@@ -289,20 +589,21 @@ export default function HomePage() {
             {/* Visual Column */}
             <div style={{ position: 'relative' }}>
               <div
+                className="pastor-portrait-frame"
                 style={{
-                  position: 'relative',
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--border-subtle)',
+                  width: '100%',
+                  maxWidth: '480px',
+                  height: '420px',
+                  margin: '0 auto',
                 }}
               >
                 <Image
-                  src="/image/Oyegbile_Privilege_a_picture_of_crowd_with_opacity_blue_colour_1befed5e-71b2-49ad-9c5a-594df293a3bf.png"
-                  alt="Worship congregation gathering at ASWS Global Ministry"
-                  width={580}
-                  height={420}
-                  style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                  src="/image/1742890223853-removebg-preview.png"
+                  alt={`Rev'd James Oyegbile - Senior Pastor of ${churchInfo.name}`}
+                  fill
+                  style={{ objectFit: 'contain' }}
+                  className="pastor-portrait-img"
+                  priority
                 />
               </div>
 
@@ -692,19 +993,20 @@ export default function HomePage() {
 
             <div style={{ position: 'relative' }}>
               <div
+                className="church-photo-frame"
                 style={{
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--border-subtle)',
+                  width: '100%',
+                  aspectRatio: '16/11',
                 }}
               >
                 <Image
-                  src="/image/download (1).jpeg"
-                  alt="Fellowship and prayer at ASWS Global Ministry"
-                  width={520}
-                  height={360}
-                  style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                  src="/image/church_prayer_vigil.jpg"
+                  alt="Fellowship and passionate prayer at ASWS Global Ministry"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 520px"
+                  style={{ objectFit: 'cover' }}
+                  className="church-photo-img"
+                  referrerPolicy="no-referrer"
                 />
               </div>
             </div>
@@ -713,7 +1015,37 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================================
+          CHURCH PHOTO GALLERY SECTION
+          Moments from recent events, worship programs, and outreach missions
+          ========================================================================= */}
+      <section className="section section-light" aria-labelledby="home-gallery-heading">
+        <div className="container">
+          <PhotoGallery
+            initialImages={galleryImages}
+            title="Moments of Faith, Fellowship & Outreach"
+            subtitle="Catch a glimpse of the Holy Spirit at work across our church events, all-night prayer vigils, choir ministrations, and community gospel missions."
+            showCategoryTabs={true}
+          />
+
+          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+            <Link href="/gallery" className="btn btn-outline-dark btn-lg">
+              <Camera size={18} />
+              <span>Explore Full Photo Gallery Archives</span>
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          TESTIMONIALS & STORIES OF FAITH
+          Wall of transformation stories & member testimony submission
+          ========================================================================= */}
+      <TestimonialSection initialTestimonials={testimonials} />
+
+      {/* =========================================================================
           PRAYER & PASTORAL SUPPORT INVITATION
+
           Warm, compassionate banner inviting personal connection
           ========================================================================= */}
       <section

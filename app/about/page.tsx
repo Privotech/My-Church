@@ -89,19 +89,21 @@ export default function AboutPage() {
 
             <div style={{ position: 'relative' }}>
               <div
+                className="pastor-portrait-frame"
                 style={{
-                  borderRadius: '16px',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--border-subtle)',
+                  width: '100%',
+                  maxWidth: '460px',
+                  height: '420px',
+                  margin: '0 auto',
                 }}
               >
                 <Image
-                  src="/image/03.jpg"
-                  alt="Worship congregation at All Soul's Winning for Saviour Global Ministry"
-                  width={560}
-                  height={420}
-                  style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+                  src="/image/1742890223853-removebg-preview.png"
+                  alt={`Rev'd James Oyegbile - ${churchInfo.pastor}`}
+                  fill
+                  style={{ objectFit: 'contain' }}
+                  className="pastor-portrait-img"
+                  priority
                 />
               </div>
 
@@ -245,16 +247,11 @@ export default function AboutPage() {
             >
               <div style={{ textAlign: 'center' }}>
                 <div
+                  className="pastor-portrait-frame"
                   style={{
-                    position: 'relative',
                     width: '320px',
                     height: '380px',
                     margin: '0 auto',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    border: '3px solid var(--accent-gold)',
-                    boxShadow: 'var(--shadow-lg)',
-                    background: '#ffffff',
                   }}
                 >
                   <Image
@@ -262,6 +259,7 @@ export default function AboutPage() {
                     alt={churchInfo.pastor}
                     fill
                     style={{ objectFit: 'contain' }}
+                    className="pastor-portrait-img"
                   />
                 </div>
               </div>
