@@ -88,7 +88,7 @@ export default async function HomePage() {
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: `radial-gradient(circle at 50% 35%, rgba(19, 34, 56, 0.88) 0%, rgba(7, 13, 20, 0.97) 100%), url('/image/DALL·E 2025-03-17 15.40.37 - A blurred background image of a large congregation in a church setting. The image should have a spiritual ambiance with a mix of blue and orange light.webp')`,
+            backgroundImage: `radial-gradient(circle at 50% 35%, rgba(19, 34, 56, 0.88) 0%, rgba(7, 13, 20, 0.97) 100%), url('/image/hero-background.webp')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             opacity: 0.95,
