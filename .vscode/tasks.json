@@ -27,6 +27,20 @@
 			"type": "shell",
 			"command": "npm run dev",
 			"isBackground": true
+		},
+		{
+			"label": "Pull Neon environment variables",
+			"type": "shell",
+			"command": "npx neon env pull --file .env.local",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restore Next.js shared modules",
+			"type": "shell",
+			"command": "git checkout origin/master -- components lib",
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }
