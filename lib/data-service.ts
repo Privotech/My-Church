@@ -16,10 +16,13 @@ import {
   TestimonialInput,
   FormSubmissionResult,
   GalleryImageItem,
+  ChurchUpdateInput,
+  ChurchUpdateItem,
 } from './types';
 
 // In-memory cache for live submissions and session persistence
 const inMemoryTestimonials: TestimonialItem[] = [...initialTestimonials];
+const inMemoryUpdates: ChurchUpdateItem[] = [];
 
 
 /**
@@ -439,5 +442,103 @@ export async function getGalleryImages(options?: {
   return images;
 }
 
+export async function getChurchUpdates(options?: {
+  includeUnpublished?: boolean;
+  limit?: number;
+}): Promise<ChurchUpdateItem[]> {
+  try {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const updates = await prisma.churchUpdate.findMany({
+        where: options?.includeUnpublished ? undefined : { isPublished: true },
+        orderBy: { publishedAt: 'desc' },
+        take: options?.limit ?? 50,
+      });
+
+      return updates.map((update) => ({
+        id: update.id,
+        title: update.title,
+        summary: update.summary,
+        content: update.content,
+        imageUrl: update.imageUrl,
+        publishedAt: update.publishedAt.toISOString(),
+        isPublished: update.isPublished,
+      }));
+    }
+  } catch (error) {
+    console.warn('[DataService] Database query failed for church updates, falling back:', error);
+  }
+
+  const updates = options?.includeUnpublished
+    ? inMemoryUpdates
+    : inMemoryUpdates.filter((update) => update.isPublished);
+  return updates.slice(0, options?.limit ?? 50);
+}
+
+export async function createChurchUpdate(
+  data: ChurchUpdateInput
+): Promise<FormSubmissionResult<ChurchUpdateItem>> {
+  const title = data.title?.trim();
+  const summary = data.summary?.trim();
+  const content = data.content?.trim();
+  const errors: Record<string, string[]> = {};
+
+  if (!title || title.length < 3) errors.title = ['Title must be at least 3 characters.'];
+  if (!summary || summary.length < 10) errors.summary = ['Summary must be at least 10 characters.'];
+  if (!content || content.length < 20) errors.content = ['Content must be at least 20 characters.'];
+
+  if (Object.keys(errors).length > 0) {
+    return { success: false, message: 'Please complete the required fields.', errors };
+  }
+
+  const publishedAt = data.publishedAt ? new Date(data.publishedAt) : new Date();
+  if (Number.isNaN(publishedAt.getTime())) {
+    return { success: false, message: 'Please provide a valid publication date.' };
+  }
+
+  try {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const created = await prisma.churchUpdate.create({
+        data: {
+          title,
+          summary,
+          content,
+          imageUrl: data.imageUrl?.trim() || null,
+          publishedAt,
+          isPublished: data.isPublished ?? true,
+        },
+      });
+      return {
+        success: true,
+        message: 'Church update published successfully.',
+        data: {
+          id: created.id,
+          title: created.title,
+          summary: created.summary,
+          content: created.content,
+          imageUrl: created.imageUrl,
+          publishedAt: created.publishedAt.toISOString(),
+          isPublished: created.isPublished,
+        },
+      };
+    }
+
+    const update: ChurchUpdateItem = {
+      id: `update-${Date.now()}`,
+      title,
+      summary,
+      content,
+      imageUrl: data.imageUrl?.trim() || null,
+      publishedAt: publishedAt.toISOString(),
+      isPublished: data.isPublished ?? true,
+    };
+    inMemoryUpdates.unshift(update);
+    return { success: true, message: 'Church update saved for this session.', data: update };
+  } catch (error) {
+    console.error('[DataService] Error creating church update:', error);
+    return { success: false, message: 'Unable to save the church update right now.' };
+  }
+}
 
 

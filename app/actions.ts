@@ -1,7 +1,9 @@
 'use server';
 
-import { saveContactMessage, savePrayerRequest, saveTestimonial } from '@/lib/data-service';
+import { createChurchUpdate, saveContactMessage, savePrayerRequest, saveTestimonial } from '@/lib/data-service';
+import { clearAdminSession, isValidAdminKey, setAdminSession, hasAdminSession } from '@/lib/admin-auth';
 import { FormSubmissionResult, TestimonialItem } from '@/lib/types';
+import { redirect } from 'next/navigation';
 
 
 export async function submitContactAction(
@@ -63,3 +65,45 @@ export async function submitTestimonialAction(
   });
 }
 
+export async function adminLoginAction(
+  _prevState: FormSubmissionResult | null,
+  formData: FormData
+): Promise<FormSubmissionResult> {
+  const key = String(formData.get('key') || '');
+  if (!key) return { success: false, message: 'Enter the admin secret key.' };
+
+  try {
+    if (!isValidAdminKey(key)) {
+      return { success: false, message: 'Invalid admin secret key.' };
+    }
+    await setAdminSession();
+    redirect('/admin');
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
+    console.error('[Admin] Login failed:', error);
+    return { success: false, message: 'Admin login is not configured correctly.' };
+  }
+}
+
+export async function adminLogoutAction(): Promise<void> {
+  await clearAdminSession();
+  redirect('/admin/login');
+}
+
+export async function createChurchUpdateAction(
+  _prevState: FormSubmissionResult | null,
+  formData: FormData
+): Promise<FormSubmissionResult> {
+  if (!(await hasAdminSession())) {
+    return { success: false, message: 'Your admin session has expired. Please sign in again.' };
+  }
+
+  return createChurchUpdate({
+    title: String(formData.get('title') || ''),
+    summary: String(formData.get('summary') || ''),
+    content: String(formData.get('content') || ''),
+    imageUrl: String(formData.get('imageUrl') || ''),
+    publishedAt: String(formData.get('publishedAt') || ''),
+    isPublished: formData.get('isPublished') === 'on',
+  });
+}

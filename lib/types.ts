@@ -117,4 +117,22 @@ export interface GalleryImageItem {
   featured?: boolean;
 }
 
+export interface ChurchUpdateItem {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  imageUrl?: string | null;
+  publishedAt: string;
+  isPublished: boolean;
+}
+
+export interface ChurchUpdateInput {
+  title: string;
+  summary: string;
+  content: string;
+  imageUrl?: string;
+  publishedAt?: string;
+  isPublished?: boolean;
+}
 

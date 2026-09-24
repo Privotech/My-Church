@@ -97,6 +97,27 @@
 			"command": "node -e \"const fs=require('fs');const dir='public/image';const src=fs.readdirSync(dir).find(f=>f.startsWith('DALL'));if(!src)process.exit(1);fs.renameSync(dir+'/'+src,dir+'/hero-background.webp')\"",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Inspect logo asset",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs');const p='public/image/ALL_SOULS_WINNING_FOR_SAVIOUR_GLOBAL_MINISTRY-removebg-preview.png';const s=fs.statSync(p);const b=fs.readFileSync(p).subarray(0,8);console.log(JSON.stringify({size:s.size,signature:[...b]}))\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check live logo response",
+			"type": "shell",
+			"command": "curl.exe -I http://localhost:3000/image/ALL_SOULS_WINNING_FOR_SAVIOUR_GLOBAL_MINISTRY-removebg-preview.png",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Next.js build",
+			"type": "shell",
+			"command": "npm run build",
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

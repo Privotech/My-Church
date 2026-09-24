@@ -88,3 +88,18 @@ model Testimonial {
   @@index([createdAt(sort: Desc)])
   @@index([category])
 }
+
+model ChurchUpdate {
+  id          String   @id @default(cuid())
+  title       String
+  summary     String
+  content     String
+  imageUrl    String?
+  publishedAt DateTime @default(now())
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([publishedAt(sort: Desc)])
+  @@index([isPublished, publishedAt(sort: Desc)])
+}
