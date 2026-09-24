@@ -1,9 +1,10 @@
 'use server';
 
 import { createChurchUpdate, saveContactMessage, savePrayerRequest, saveTestimonial } from '@/lib/data-service';
-import { clearAdminSession, isValidAdminKey, setAdminSession, hasAdminSession } from '@/lib/admin-auth';
+import { clearAdminSession, isAdminConfigured, isValidAdminKey, setAdminSession, hasAdminSession } from '@/lib/admin-auth';
 import { FormSubmissionResult, TestimonialItem } from '@/lib/types';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 
 
 export async function submitContactAction(
@@ -71,6 +72,9 @@ export async function adminLoginAction(
 ): Promise<FormSubmissionResult> {
   const key = String(formData.get('key') || '');
   if (!key) return { success: false, message: 'Enter the admin secret key.' };
+  if (!isAdminConfigured()) {
+    return { success: false, message: 'Admin login is not set up yet. Add ADMIN_SECRET_KEY to .env.local and restart the development server.' };
+  }
 
   try {
     if (!isValidAdminKey(key)) {
@@ -98,7 +102,7 @@ export async function createChurchUpdateAction(
     return { success: false, message: 'Your admin session has expired. Please sign in again.' };
   }
 
-  return createChurchUpdate({
+  const result = await createChurchUpdate({
     title: String(formData.get('title') || ''),
     summary: String(formData.get('summary') || ''),
     content: String(formData.get('content') || ''),
@@ -106,4 +110,11 @@ export async function createChurchUpdateAction(
     publishedAt: String(formData.get('publishedAt') || ''),
     isPublished: formData.get('isPublished') === 'on',
   });
+
+  if (result.success) {
+    revalidatePath('/admin');
+    revalidatePath('/updates');
+  }
+
+  return result;
 }

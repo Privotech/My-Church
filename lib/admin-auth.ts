@@ -11,6 +11,10 @@ function getAdminSecret(): string {
   return secret;
 }
 
+export function isAdminConfigured(): boolean {
+  return Boolean(process.env.ADMIN_SECRET_KEY?.trim());
+}
+
 function expectedSession(): string {
   return createHmac('sha256', getAdminSecret()).update('asws-admin').digest('hex');
 }
