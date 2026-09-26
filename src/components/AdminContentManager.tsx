@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useActionState, useState } from 'react';
+import { FormEvent, ReactNode, useActionState, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CalendarDays, Check, Heart, Images, LayoutDashboard, Mic2, Newspaper, Pencil, Plus, Sparkles, Trash2, Users } from 'lucide-react';
 import {
@@ -55,17 +55,83 @@ const removeActions: Record<SectionId, RemoveAction> = {
 
 function ContentForm({ action, button, children }: { action: ContentAction; button: string; children: ReactNode }) {
   const [state, formAction, pending] = useActionState(action, { success: false, message: '' });
+  const { onSubmit, uploading, uploadError } = useDirectCloudinaryUpload();
   return (
-    <form action={formAction} className="admin-form">
+    <form action={formAction} onSubmit={onSubmit} className="admin-form">
       {children}
+      {uploadError && <p className="admin-form-message" role="alert">{uploadError}</p>}
       {state.message && <p className={state.success ? 'admin-form-success' : 'admin-form-message'} role="status">{state.message}</p>}
-      <button className="btn btn-primary" type="submit" disabled={pending}>{pending ? 'Saving…' : button}</button>
+      <button className="btn btn-primary" type="submit" disabled={pending || uploading}>{uploading ? 'Uploading photos…' : pending ? 'Saving…' : button}</button>
     </form>
   );
 }
 
+async function uploadFileDirectly(file: File): Promise<string> {
+  if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(file.type)) throw new Error(`${file.name}: choose a JPEG, PNG, WebP, or AVIF image.`);
+  if (file.size <= 0 || file.size > 8 * 1024 * 1024) throw new Error(`${file.name}: images must be 8 MB or smaller.`);
+  const signedResponse = await fetch('/api/admin/cloudinary-signature', { method: 'POST', cache: 'no-store' });
+  const signed = await signedResponse.json();
+  if (!signedResponse.ok) throw new Error(signed.error || 'Could not authorize the image upload.');
+
+  const body = new FormData();
+  body.append('file', file);
+  body.append('api_key', signed.apiKey);
+  body.append('timestamp', String(signed.timestamp));
+  body.append('folder', signed.folder);
+  body.append('overwrite', String(signed.overwrite));
+  body.append('signature', signed.signature);
+  const response = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(signed.cloudName)}/image/upload`, { method: 'POST', body });
+  const uploaded = await response.json();
+  if (!response.ok || typeof uploaded.secure_url !== 'string') throw new Error(uploaded.error?.message || 'Cloudinary could not upload this image.');
+  return uploaded.secure_url;
+}
+
+function useDirectCloudinaryUpload() {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const inputs = Array.from(form.querySelectorAll<HTMLInputElement>('input[data-cloudinary-upload]'));
+    const selected = inputs.flatMap((input) => Array.from(input.files ?? []).map((file) => ({ input, file, field: input.dataset.cloudinaryUpload })));
+    if (!selected.length) return;
+    event.preventDefault();
+    if (uploading) return;
+
+    const galleryFiles = selected.filter(({ field }) => field === 'images');
+    const galleryBytes = galleryFiles.reduce((sum, item) => sum + item.file.size, 0);
+    if (galleryFiles.length > 5 || galleryBytes > 40 * 1024 * 1024) {
+      setUploadError('Choose no more than 5 photos totaling 40 MB or less.');
+      return;
+    }
+
+    setUploadError('');
+    setUploading(true);
+    void (async () => {
+      const uploaded: { field: string; url: string }[] = [];
+      for (const item of selected) {
+        if (!item.field) throw new Error('An image field is missing its destination.');
+        uploaded.push({ field: item.field, url: await uploadFileDirectly(item.file) });
+      }
+      for (const old of form.querySelectorAll<HTMLInputElement>('input[data-cloudinary-upload-result]')) old.remove();
+      for (const image of uploaded) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = image.field;
+        hidden.value = image.url;
+        hidden.dataset.cloudinaryUploadResult = 'true';
+        form.append(hidden);
+      }
+      inputs.forEach((input) => { input.value = ''; });
+      form.requestSubmit();
+    })().catch((error: unknown) => {
+      setUploadError(error instanceof Error ? error.message : 'The image upload failed. Please try again.');
+    }).finally(() => setUploading(false));
+  };
+  return { onSubmit, uploading, uploadError };
+}
+
 function PhotoField({ id = 'image' }: { id?: string }) {
-  return <div className="admin-photo-field"><label htmlFor={id}>Photo from your device <span>(optional)</span></label><input id={id} name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /><small>JPEG, PNG, WebP or AVIF. Up to 8 MB.</small></div>;
+  return <div className="admin-photo-field"><label htmlFor={id}>Photo from your device <span>(optional)</span></label><input id={id} type="file" data-cloudinary-upload="image" accept="image/jpeg,image/png,image/webp,image/avif" /><small>JPEG, PNG, WebP or AVIF. Up to 8 MB. Photos upload directly to Cloudinary.</small></div>;
 }
 
 function RemoveEntryForm({ item, section, action }: { item: ManagedEntry; section: string; action: RemoveAction }) {
@@ -106,6 +172,7 @@ function UnusedImageForm({ asset }: { asset: { publicId: string; url: string; by
 
 function EditContentForm({ item, section }: { item: ManagedEntry; section: SectionId }) {
   const [state, formAction, pending] = useActionState(editActions[section], { success: false, message: '' });
+  const { onSubmit, uploading, uploadError } = useDirectCloudinaryUpload();
   const value = (name: string) => item.fields[name] ?? '';
   const input = (label: string, name: string, type = 'text', required = true) => (
     <><label htmlFor={`edit-${item.id}-${name}`}>{label}</label><input id={`edit-${item.id}-${name}`} name={name} type={type} defaultValue={value(name)} required={required} /></>
@@ -115,17 +182,18 @@ function EditContentForm({ item, section }: { item: ManagedEntry; section: Secti
   );
 
   return (
-    <form action={formAction} className="admin-form admin-edit-form">
+    <form action={formAction} onSubmit={onSubmit} className="admin-form admin-edit-form">
       <input type="hidden" name="id" value={item.id} />
       <div className="admin-edit-form-title"><span className="admin-editor-icon"><Pencil size={18} /></span><div><p className="admin-eyebrow">Editing {section}</p><h3>{item.title}</h3></div></div>
-      {section === 'updates' && <>{input('Title', 'title')}{input('Publish date', 'publishedAt', 'date')}{input('Short summary', 'summary')}{area('Full update', 'content')}<label>Replace photo <span>(optional)</span></label><input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /><label>Schedule for <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label></>}
+      {section === 'updates' && <>{input('Title', 'title')}{input('Publish date', 'publishedAt', 'date')}{input('Short summary', 'summary')}{area('Full update', 'content')}<label>Replace photo <span>(optional)</span></label><input type="file" data-cloudinary-upload="image" accept="image/jpeg,image/png,image/webp,image/avif" /><label>Schedule for <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label></>}
       {section === 'sermons' && <>{input('Sermon title', 'title')}{input('Speaker', 'speaker')}{input('Date preached', 'date', 'date')}{input('Series', 'series', 'text', false)}{area('Description', 'description', true, 3)}{input('Video link', 'videoUrl', 'url', false)}{input('Audio link', 'audioUrl', 'url', false)}<label>Schedule for <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label></>}
       {section === 'programs' && <>{input('Program name', 'title')}<label htmlFor={`edit-${item.id}-category`}>Program type</label><select id={`edit-${item.id}-category`} name="category" defaultValue={value('category')}><option value="WEEKLY">Weekly</option><option value="MONTHLY">Monthly</option></select>{input('Day or frequency', 'dayOrFrequency')}{input('Time', 'time')}{area('Description', 'description', false, 3)}{input('Event date', 'eventDate', 'date', false)}<label>Status</label><select name="status" defaultValue={value('status')}><option value="UPCOMING">Upcoming</option><option value="PAST">Past</option><option value="CANCELLED">Cancelled</option></select><label className="admin-checkbox"><input name="isFeatured" type="checkbox" defaultChecked={value('isFeatured') === 'true'} /> Feature event</label><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label><label>Schedule publication <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /></>}
-      {section === 'gallery' && <>{input('Photo title', 'title')}<label htmlFor={`edit-${item.id}-category`}>Category</label><select id={`edit-${item.id}-category`} name="category" defaultValue={value('category')}><option value="EVENTS">Events</option><option value="PROGRAMS">Programs</option><option value="OUTREACH">Outreach</option><option value="WORSHIP">Worship</option></select>{area('Description', 'description', true, 3)}{input('Date', 'date', 'date')}{input('Location', 'location')}{value('imageUrl') && <p className="admin-current-image">A photo is saved. Choose a file below to replace it.</p>}<label>Replace photo <span>(optional)</span></label><input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /><label>Schedule publication <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label><label className="admin-checkbox"><input name="featured" type="checkbox" defaultChecked={value('featured') === 'true'} /> Feature this photo</label></>}
-      {section === 'leadership' && <>{input('Name', 'name')}{input('Role', 'role')}{area('Introduction', 'description')}{value('imageUrl') && <p className="admin-current-image">A photo is saved. Choose a file below to replace it.</p>}<label>Replace photo <span>(optional)</span></label><input name="image" type="file" accept="image/jpeg,image/png,image/webp,image/avif" /><label>Schedule publication <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label></>}
+      {section === 'gallery' && <>{input('Photo title', 'title')}<label htmlFor={`edit-${item.id}-category`}>Category</label><select id={`edit-${item.id}-category`} name="category" defaultValue={value('category')}><option value="EVENTS">Events</option><option value="PROGRAMS">Programs</option><option value="OUTREACH">Outreach</option><option value="WORSHIP">Worship</option></select>{area('Description', 'description', true, 3)}{input('Date', 'date', 'date')}{input('Location', 'location')}{value('imageUrl') && <p className="admin-current-image">A photo is saved. Choose a file below to replace it.</p>}<label>Replace photo <span>(optional)</span></label><input type="file" data-cloudinary-upload="image" accept="image/jpeg,image/png,image/webp,image/avif" /><label>Schedule publication <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label><label className="admin-checkbox"><input name="featured" type="checkbox" defaultChecked={value('featured') === 'true'} /> Feature this photo</label></>}
+      {section === 'leadership' && <>{input('Name', 'name')}{input('Role', 'role')}{area('Introduction', 'description')}{value('imageUrl') && <p className="admin-current-image">A photo is saved. Choose a file below to replace it.</p>}<label>Replace photo <span>(optional)</span></label><input type="file" data-cloudinary-upload="image" accept="image/jpeg,image/png,image/webp,image/avif" /><label>Schedule publication <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isPublished" type="checkbox" defaultChecked={value('isPublished') === 'true'} /> Publish</label></>}
       {section === 'testimonials' && <>{input('Name', 'name')}{input('Location or role', 'locationOrRole', 'text', false)}{input('Category', 'category')}{input('Testimony title', 'title')}{area('Testimony', 'story')}{input('Scripture', 'scripture', 'text', false)}<label>Schedule for <span>(optional)</span></label><input name="publishAt" type="datetime-local" defaultValue={value('publishAt')} /><label className="admin-checkbox"><input name="isApproved" type="checkbox" defaultChecked={value('isApproved') === 'true'} /> Show publicly</label></>}
+      {uploadError && <p className="admin-form-message" role="alert">{uploadError}</p>}
       {state.message && <p className={state.success ? 'admin-form-success' : 'admin-form-message'} role="status">{state.message}</p>}
-      <button className="btn btn-primary" type="submit" disabled={pending}>{pending ? 'Saving…' : 'Save changes'}</button>
+      <button className="btn btn-primary" type="submit" disabled={pending || uploading}>{uploading ? 'Uploading photo…' : pending ? 'Saving…' : 'Save changes'}</button>
     </form>
   );
 }
@@ -258,7 +326,7 @@ export default function AdminContentManager({ managedContent, databaseConfigured
 
         {activeSection === 'gallery' && <section className="admin-panel" id="new-photo"><p className="admin-eyebrow">Church moments</p><h3>Add photos to the gallery</h3>
           <ContentForm action={createGalleryImageAction} button="Add photos to gallery">
-            <label htmlFor="gallery-images">Choose photos from your device</label><input id="gallery-images" name="images" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple required onChange={(event) => setGalleryFileNames(Array.from(event.currentTarget.files ?? []).map((file) => file.name))} />
+            <label htmlFor="gallery-images">Choose photos from your device</label><input id="gallery-images" type="file" data-cloudinary-upload="images" accept="image/jpeg,image/png,image/webp,image/avif" multiple onChange={(event) => setGalleryFileNames(Array.from(event.currentTarget.files ?? []).map((file) => file.name))} />
             <small>Select up to 5 photos at once. JPEG, PNG, WebP or AVIF; up to 8 MB each. Shared details below will be applied to every photo.</small>
             {galleryFileNames.length > 0 && <p className="admin-selected-files" role="status">{galleryFileNames.length} selected: {galleryFileNames.join(', ')}</p>}
             <label htmlFor="gallery-title">Photo title</label><input id="gallery-title" name="title" required />

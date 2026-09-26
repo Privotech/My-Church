@@ -1,17 +1,7 @@
 import 'server-only';
 import { v2 as cloudinary } from 'cloudinary';
-import type { UploadApiOptions, UploadApiResponse } from 'cloudinary';
 
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
-const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
-
-function matchesImageSignature(buffer: Buffer, mimeType: string): boolean {
-  if (mimeType === 'image/jpeg') return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
-  if (mimeType === 'image/png') return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-  if (mimeType === 'image/webp') return buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP';
-  if (mimeType === 'image/avif') return buffer.toString('ascii', 4, 8) === 'ftyp' && /avif|avis/.test(buffer.toString('ascii', 8, Math.min(buffer.length, 64)));
-  return false;
-}
 
 let configured = false;
 
@@ -38,32 +28,47 @@ function getCloudinary() {
   return cloudinary;
 }
 
-function uploadBuffer(buffer: Buffer, options: UploadApiOptions): Promise<UploadApiResponse> {
-  return new Promise((resolve, reject) => {
-    getCloudinary().uploader.upload_stream(options, (error, result) => {
-      if (error) reject(error);
-      else if (result) resolve(result);
-      else reject(new Error('Cloudinary did not return an upload result.'));
-    }).end(buffer);
-  });
+export function createCloudinaryUploadSignature() {
+  const client = getCloudinary();
+  const credentials = new URL(process.env.CLOUDINARY_URL!);
+  const timestamp = Math.floor(Date.now() / 1000);
+  const parameters = { folder: 'asws/uploads', overwrite: false, timestamp };
+  return {
+    cloudName: credentials.hostname,
+    apiKey: decodeURIComponent(credentials.username),
+    folder: parameters.folder,
+    overwrite: parameters.overwrite,
+    timestamp,
+    signature: client.utils.api_sign_request(parameters, decodeURIComponent(credentials.password)),
+  };
+}
+
+export async function verifyCloudinaryImageUpload(imageUrl: string): Promise<{ url: string; bytes: number }> {
+  const publicId = getManagedPublicId(imageUrl);
+  if (!publicId?.startsWith('asws/uploads/')) throw new Error('Choose a photo uploaded to the managed church media folder.');
+
+  const resource = await getCloudinary().api.resource(publicId, { resource_type: 'image', type: 'upload' });
+  const formats = new Set(['jpg', 'jpeg', 'png', 'webp', 'avif']);
+  const createdAt = new Date(resource.created_at).getTime();
+  const currentTime = Date.now();
+  if (
+    resource.type !== 'upload' ||
+    resource.public_id !== publicId ||
+    !formats.has(String(resource.format).toLowerCase()) ||
+    !Number.isFinite(resource.bytes) || resource.bytes <= 0 || resource.bytes > MAX_IMAGE_SIZE ||
+    !Number.isFinite(createdAt) || createdAt < currentTime - 60 * 60 * 1000 || createdAt > currentTime + 60 * 1000 ||
+    resource.secure_url !== imageUrl
+  ) {
+    throw new Error('That photo is invalid, too large, or its upload has expired. Please choose it again.');
+  }
+
+  return { url: resource.secure_url, bytes: resource.bytes };
 }
 
 export async function uploadCloudinaryImage(file: FormDataEntryValue | null): Promise<string | null> {
-  if (!(file instanceof File) || file.size === 0) return null;
-  if (!allowedTypes.has(file.type)) throw new Error('Choose a JPEG, PNG, WebP, or AVIF image.');
-  if (file.size > MAX_IMAGE_SIZE) throw new Error('Images must be 8 MB or smaller.');
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  if (!matchesImageSignature(buffer, file.type)) throw new Error('The selected file is not a valid image of the chosen type.');
-
-  const result = await uploadBuffer(buffer, {
-    folder: 'asws/uploads',
-    resource_type: 'image',
-    unique_filename: true,
-    overwrite: false,
-  });
-
-  return result.secure_url;
+  if (file == null || file === '') return null;
+  if (typeof file !== 'string') throw new Error('Please choose the photo again so it can be uploaded directly.');
+  return (await verifyCloudinaryImageUpload(file.trim())).url;
 }
 
 function getManagedPublicId(imageUrl?: string | null): string | null {

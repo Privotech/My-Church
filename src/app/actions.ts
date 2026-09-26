@@ -6,7 +6,7 @@ import { FormSubmissionResult, TestimonialItem } from '@/lib/types';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getPrismaClient } from '@/lib/prisma';
-import { deleteCloudinaryImage, deleteCloudinaryAsset, uploadCloudinaryImage } from '@/lib/media-storage';
+import { deleteCloudinaryAsset, uploadCloudinaryImage, verifyCloudinaryImageUpload } from '@/lib/media-storage';
 import { enforceRequestRateLimit } from '@/lib/rate-limit';
 
 async function rateLimitResponse<T = unknown>(scope: string, limit: number, windowMs: number): Promise<FormSubmissionResult<T> | null> {
@@ -409,29 +409,25 @@ export async function createGalleryImageAction(_state: FormSubmissionResult | nu
     return { success: false, message: 'Add a title, category, description, and valid date.' };
   }
   if (!(await hasAdminSession())) return { success: false, message: 'Your admin session has expired. Please sign in again.' };
-  const files = formData.getAll('images').filter((value): value is File => value instanceof File && value.size > 0);
-  const totalSize = files.reduce((size, file) => size + file.size, 0);
-  if (files.length === 0) return { success: false, message: 'Choose at least one photo from your device.' };
-  if (files.length > 5) return { success: false, message: 'Choose no more than 5 photos at once.' };
-  if (totalSize > 40 * 1024 * 1024) return { success: false, message: 'The selected photos must total 40 MB or less.' };
-  const uploadedUrls: string[] = [];
+  const submittedUrls = formData.getAll('images').filter((value): value is string => typeof value === 'string' && value.length <= 2048);
+  if (submittedUrls.length === 0) return { success: false, message: 'Choose at least one photo from your device.' };
+  if (submittedUrls.length > 5) return { success: false, message: 'Choose no more than 5 photos at once.' };
+  let uploadedUrls: string[];
   try {
-    for (const file of files) {
-      const imageUrl = await uploadCloudinaryImage(file);
-      if (!imageUrl) throw new Error('One of the selected photos could not be uploaded.');
-      uploadedUrls.push(imageUrl);
+    const verified = await Promise.all(submittedUrls.map((imageUrl) => verifyCloudinaryImageUpload(imageUrl)));
+    if (verified.reduce((sum, image) => sum + image.bytes, 0) > 40 * 1024 * 1024) {
+      return { success: false, message: 'The selected photos must total 40 MB or less.' };
     }
+    uploadedUrls = verified.map((image) => image.url);
   } catch (error) {
-    await Promise.allSettled(uploadedUrls.map((imageUrl) => deleteCloudinaryImage(imageUrl)));
-    return { success: false, message: error instanceof Error ? error.message : 'Could not upload the selected photos.' };
+    return { success: false, message: error instanceof Error ? error.message : 'Could not verify the selected photos.' };
   }
 
   const result = await saveAdminContent(formData, async (prisma) => {
     await prisma.galleryImage.createMany({
-      data: uploadedUrls.map((imageUrl, index) => ({ title: files.length > 1 ? `${title} (${index + 1})` : title, category, description, date, location: field(formData, 'location') || 'Ogbomosho', imageUrl, featured: formData.get('featured') === 'on', isPublished: formData.get('isPublished') === 'on', publishAt: optionalDate(field(formData,'publishAt')) })),
+      data: uploadedUrls.map((imageUrl, index) => ({ title: uploadedUrls.length > 1 ? `${title} (${index + 1})` : title, category, description, date, location: field(formData, 'location') || 'Ogbomosho', imageUrl, featured: formData.get('featured') === 'on', isPublished: formData.get('isPublished') === 'on', publishAt: optionalDate(field(formData,'publishAt')) })),
     });
   }, ['/gallery']);
-  if (!result.success) await Promise.allSettled(uploadedUrls.map((imageUrl) => deleteCloudinaryImage(imageUrl)));
   return { ...result, message: result.success ? `${uploadedUrls.length} photo${uploadedUrls.length === 1 ? '' : 's'} added to the gallery.` : result.message };
 }
 
