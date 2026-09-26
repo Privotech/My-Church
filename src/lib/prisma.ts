@@ -32,10 +32,7 @@ export function getPrismaClient(): PrismaClient | null {
       log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
     });
 
-    if (process.env.NODE_ENV !== 'production') {
-      globalForPrisma.prisma = client;
-    }
-
+    globalForPrisma.prisma = client;
     return client;
   } catch (err) {
     console.warn('[Prisma] Could not initialize PrismaClient:', err);

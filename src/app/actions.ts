@@ -7,17 +7,26 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getPrismaClient } from '@/lib/prisma';
 import { deleteCloudinaryImage, deleteCloudinaryAsset, uploadCloudinaryImage } from '@/lib/media-storage';
+import { enforceRequestRateLimit } from '@/lib/rate-limit';
 
+async function rateLimitResponse<T = unknown>(scope: string, limit: number, windowMs: number): Promise<FormSubmissionResult<T> | null> {
+  const result = await enforceRequestRateLimit(scope, limit, windowMs);
+  if (result.allowed) return null;
+  if ('unavailable' in result) return { success: false, message: 'Submissions are temporarily unavailable. Please try again shortly.' };
+  return { success: false, message: `Too many attempts. Please try again in about ${Math.ceil(result.retryAfterSeconds / 60)} minute(s).` };
+}
 
 export async function submitContactAction(
   prevState: FormSubmissionResult | null,
   formData: FormData
 ): Promise<FormSubmissionResult> {
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
-  const subject = formData.get('subject') as string;
-  const message = formData.get('message') as string;
+  const limited = await rateLimitResponse('contact', 5, 15 * 60 * 1000);
+  if (limited) return limited;
+  const name = String(formData.get('name') ?? '');
+  const email = String(formData.get('email') ?? '');
+  const phone = String(formData.get('phone') ?? '');
+  const subject = String(formData.get('subject') ?? '');
+  const message = String(formData.get('message') ?? '');
 
   return await saveContactMessage({
     name,
@@ -32,10 +41,12 @@ export async function submitPrayerRequestAction(
   prevState: FormSubmissionResult | null,
   formData: FormData
 ): Promise<FormSubmissionResult> {
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-  const phone = formData.get('phone') as string;
-  const request = formData.get('request') as string;
+  const limited = await rateLimitResponse('prayer', 3, 15 * 60 * 1000);
+  if (limited) return limited;
+  const name = String(formData.get('name') ?? '');
+  const email = String(formData.get('email') ?? '');
+  const phone = String(formData.get('phone') ?? '');
+  const request = String(formData.get('request') ?? '');
   const isPrivate = formData.get('isPrivate') === 'on';
 
   return await savePrayerRequest({
@@ -51,12 +62,14 @@ export async function submitTestimonialAction(
   prevState: FormSubmissionResult<TestimonialItem> | null,
   formData: FormData
 ): Promise<FormSubmissionResult<TestimonialItem>> {
-  const name = formData.get('name') as string;
-  const locationOrRole = formData.get('locationOrRole') as string;
-  const category = formData.get('category') as string;
-  const title = formData.get('title') as string;
-  const story = formData.get('story') as string;
-  const scripture = formData.get('scripture') as string;
+  const limited = await rateLimitResponse<TestimonialItem>('testimony', 3, 60 * 60 * 1000);
+  if (limited) return limited;
+  const name = String(formData.get('name') ?? '');
+  const locationOrRole = String(formData.get('locationOrRole') ?? '');
+  const category = String(formData.get('category') ?? '');
+  const title = String(formData.get('title') ?? '');
+  const story = String(formData.get('story') ?? '');
+  const scripture = String(formData.get('scripture') ?? '');
 
   return await saveTestimonial({
     name,
@@ -72,6 +85,8 @@ export async function adminLoginAction(
   _prevState: FormSubmissionResult | null,
   formData: FormData
 ): Promise<FormSubmissionResult> {
+  const limited = await rateLimitResponse('admin-login', 10, 15 * 60 * 1000);
+  if (limited) return limited;
   const key = String(formData.get('key') || '');
   if (!key) return { success: false, message: 'Enter the admin secret key.' };
   if (!isAdminConfigured()) {

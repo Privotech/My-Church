@@ -5,6 +5,14 @@ import type { UploadApiOptions, UploadApiResponse } from 'cloudinary';
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024;
 const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 
+function matchesImageSignature(buffer: Buffer, mimeType: string): boolean {
+  if (mimeType === 'image/jpeg') return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (mimeType === 'image/png') return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mimeType === 'image/webp') return buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP';
+  if (mimeType === 'image/avif') return buffer.toString('ascii', 4, 8) === 'ftyp' && /avif|avis/.test(buffer.toString('ascii', 8, Math.min(buffer.length, 64)));
+  return false;
+}
+
 let configured = false;
 
 export function isCloudinaryConfigured(): boolean {
@@ -45,7 +53,10 @@ export async function uploadCloudinaryImage(file: FormDataEntryValue | null): Pr
   if (!allowedTypes.has(file.type)) throw new Error('Choose a JPEG, PNG, WebP, or AVIF image.');
   if (file.size > MAX_IMAGE_SIZE) throw new Error('Images must be 8 MB or smaller.');
 
-  const result = await uploadBuffer(Buffer.from(await file.arrayBuffer()), {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (!matchesImageSignature(buffer, file.type)) throw new Error('The selected file is not a valid image of the chosen type.');
+
+  const result = await uploadBuffer(buffer, {
     folder: 'asws/uploads',
     resource_type: 'image',
     unique_filename: true,

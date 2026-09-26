@@ -150,3 +150,19 @@ model AdminActivity {
 
   @@index([createdAt(sort: Desc)])
 }
+
+model AdminSession {
+  id        String   @id
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model RateLimitBucket {
+  id      String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}

@@ -36,7 +36,7 @@ const CATEGORIES = [
 ];
 
 export default function TestimonialSection({ initialTestimonials }: TestimonialSectionProps) {
-  const [testimonials, setTestimonials] = useState<TestimonialItem[]>(initialTestimonials);
+  const testimonials = initialTestimonials;
   const [activeCategory, setActiveCategory] = useState<string>('All Stories');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -65,10 +65,7 @@ export default function TestimonialSection({ initialTestimonials }: TestimonialS
     startTransition(async () => {
       const result = await submitTestimonialAction(null, formData);
       setFormFeedback(result);
-      if (result.success && result.data) {
-        // Optimistically prepend to active list
-        setTestimonials((prev) => [result.data as TestimonialItem, ...prev]);
-        // Auto close after brief pause or allow viewing
+      if (result.success) {
         setTimeout(() => {
           setIsModalOpen(false);
           setFormFeedback(null);
@@ -853,7 +850,7 @@ export default function TestimonialSection({ initialTestimonials }: TestimonialS
                   ) : (
                     <>
                       <Send size={16} />
-                      <span>Publish Testimony</span>
+                      <span>Submit for Review</span>
                     </>
                   )}
                 </button>

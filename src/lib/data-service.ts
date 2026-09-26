@@ -177,6 +177,11 @@ export async function saveContactMessage(
   if (!data.message || data.message.trim().length < 5) {
     errors.message = ['Message is required (at least 5 characters)'];
   }
+  if (data.name.trim().length > 120) errors.name = ['Name must be 120 characters or fewer'];
+  if (data.email.trim().length > 254) errors.email = ['Email must be 254 characters or fewer'];
+  if ((data.phone?.length || 0) > 40) errors.phone = ['Phone must be 40 characters or fewer'];
+  if ((data.subject?.length || 0) > 160) errors.subject = ['Subject must be 160 characters or fewer'];
+  if (data.message.length > 5000) errors.message = ['Message must be 5,000 characters or fewer'];
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -225,6 +230,10 @@ export async function savePrayerRequest(
   if (!data.request || data.request.trim().length < 5) {
     errors.request = ['Prayer request is required'];
   }
+  if (data.name.trim().length > 120) errors.name = ['Name must be 120 characters or fewer'];
+  if ((data.email?.length || 0) > 254) errors.email = ['Email must be 254 characters or fewer'];
+  if ((data.phone?.length || 0) > 40) errors.phone = ['Phone must be 40 characters or fewer'];
+  if (data.request.length > 5000) errors.request = ['Prayer request must be 5,000 characters or fewer'];
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -332,6 +341,14 @@ export async function saveTestimonial(
   if (!data.category || data.category.trim().length === 0) {
     errors.category = ['Please select a category for your testimony'];
   }
+  if (data.name.trim().length > 120) errors.name = ['Name must be 120 characters or fewer'];
+  if ((data.locationOrRole?.length || 0) > 120) errors.locationOrRole = ['Location or role must be 120 characters or fewer'];
+  if (data.title.trim().length > 180) errors.title = ['Title must be 180 characters or fewer'];
+  if (data.story.length > 5000) errors.story = ['Story must be 5,000 characters or fewer'];
+  if ((data.scripture?.length || 0) > 300) errors.scripture = ['Scripture reference must be 300 characters or fewer'];
+  if (!['Family & Motherhood', 'Salvation & Purpose', 'Healing & Deliverance', 'Family & Marriage', 'Deliverance & Freedom', 'Provision & Thanksgiving'].includes(data.category.trim())) {
+    errors.category = ['Please select a valid testimony category'];
+  }
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -350,7 +367,7 @@ export async function saveTestimonial(
     story: data.story.trim(),
     scripture: data.scripture?.trim() || null,
     date: new Date().toISOString().split('T')[0],
-    isApproved: true,
+    isApproved: false,
   };
 
   try {
@@ -364,14 +381,14 @@ export async function saveTestimonial(
         title: newTestimonial.title,
         story: newTestimonial.story,
         scripture: newTestimonial.scripture,
-        isApproved: true,
+        isApproved: false,
       },
     });
     newTestimonial.id = created.id;
 
     return {
       success: true,
-      message: 'Praise the Lord! Your testimony has been received and shared to glorify God and strengthen the faith of others.',
+      message: 'Thank you for sharing your testimony. It has been received and will appear after review.',
       data: newTestimonial,
     };
   } catch (error) {
