@@ -16,6 +16,9 @@ model Sermon {
   videoUrl    String?
   audioUrl    String?
   series      String?
+  isPublished Boolean  @default(true)
+  publishAt   DateTime?
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -31,6 +34,12 @@ model Event {
   description    String?
   category       String
   order          Int      @default(0)
+  status         String   @default("UPCOMING")
+  eventDate      DateTime?
+  isFeatured     Boolean  @default(false)
+  isPublished    Boolean  @default(true)
+  publishAt      DateTime?
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -44,6 +53,9 @@ model TeamMember {
   quoteOrDescription String
   imageUrl           String?
   order              Int      @default(0)
+  isPublished        Boolean  @default(true)
+  publishAt          DateTime?
+  deletedAt          DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -83,6 +95,8 @@ model Testimonial {
   story          String
   scripture      String?
   isApproved     Boolean  @default(true)
+  publishAt      DateTime?
+  deletedAt      DateTime?
   createdAt      DateTime @default(now())
 
   @@index([createdAt(sort: Desc)])
@@ -97,9 +111,42 @@ model ChurchUpdate {
   imageUrl    String?
   publishedAt DateTime @default(now())
   isPublished Boolean  @default(true)
+  publishAt   DateTime?
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([publishedAt(sort: Desc)])
   @@index([isPublished, publishedAt(sort: Desc)])
+}
+
+model GalleryImage {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  description String
+  imageUrl    String
+  date        DateTime @default(now())
+  location    String
+  featured    Boolean  @default(false)
+  isPublished Boolean  @default(true)
+  publishAt   DateTime?
+  sortOrder   Int      @default(0)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([date(sort: Desc)])
+  @@index([category])
+  @@index([sortOrder])
+}
+
+model AdminActivity {
+  id        String   @id @default(cuid())
+  section   String
+  action    String
+  title     String
+  entryId   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
+import Image from '@/components/ChurchImage';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { churchInfo } from '@/lib/church-data';

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/ChurchImage';
 import { usePathname } from 'next/navigation';
 import { churchInfo } from '@/lib/church-data';
 import {
@@ -116,7 +116,11 @@ export default function Navbar() {
 
           {/* Right Action: Give CTA & Mobile Toggle */}
           <div className="nav-cta-group">
-            <Link href="/give" className="btn btn-primary btn-sm" aria-label="Give online or bank transfer">
+            <Link
+              href="/give"
+              className="btn btn-primary btn-sm nav-give-link"
+              aria-label="Give online or bank transfer"
+            >
               <Heart size={15} fill="currentColor" />
               <span>Give / Support</span>
             </Link>

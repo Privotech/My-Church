@@ -49,6 +49,8 @@ export interface ProgramEventItem {
   description?: string | null;
   category: 'WEEKLY' | 'MONTHLY';
   order: number;
+  status?: string;
+  isFeatured?: boolean;
 }
 
 export interface TeamMemberItem {
@@ -115,6 +117,26 @@ export interface GalleryImageItem {
   date: string;
   location: string;
   featured?: boolean;
+  sortOrder?: number;
 }
 
+export interface ChurchUpdateItem {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  imageUrl?: string | null;
+  publishedAt: string;
+  isPublished: boolean;
+}
+
+export interface ChurchUpdateInput {
+  title: string;
+  summary: string;
+  content: string;
+  imageUrl?: string;
+  publishedAt?: string;
+  isPublished?: boolean;
+  publishAt?: string;
+}
 

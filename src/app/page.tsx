@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/ChurchImage';
 import { churchInfo } from '@/lib/church-data';
 import { getTestimonials, getGalleryImages } from '@/lib/data-service';
 import TestimonialSection from '@/components/TestimonialSection';

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Image from 'next/image';
+import Image from '@/components/ChurchImage';
 import { GalleryImageItem, GalleryCategory } from '@/lib/types';
 import {
   Camera,

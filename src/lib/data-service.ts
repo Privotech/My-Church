@@ -16,9 +16,11 @@ import {
   TestimonialInput,
   FormSubmissionResult,
   GalleryImageItem,
+  ChurchUpdateInput,
+  ChurchUpdateItem,
 } from './types';
 
-// In-memory cache for live submissions and session persistence
+// Static fallback content is used only when no database URL is configured.
 const inMemoryTestimonials: TestimonialItem[] = [...initialTestimonials];
 
 
@@ -46,7 +48,7 @@ export async function getSermons(options?: {
       }
 
       const dbSermons = await prisma.sermon.findMany({
-        where,
+        where: { ...where, deletedAt: null, isPublished: true, AND: [{ OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }] }] },
         take: options?.limit ?? 12,
         orderBy: { date: 'desc' },
         select: {
@@ -61,15 +63,14 @@ export async function getSermons(options?: {
         },
       });
 
-      if (dbSermons && dbSermons.length > 0) {
-        return dbSermons.map((s) => ({
-          ...s,
-          date: s.date.toISOString().split('T')[0],
-        }));
-      }
+      return dbSermons.map((s) => ({
+        ...s,
+        date: s.date.toISOString().split('T')[0],
+      }));
     }
   } catch (error) {
-    console.warn('[DataService] Database query failed, falling back to static data:', error);
+    console.error('[DataService] Database query failed for sermons:', error);
+    return [];
   }
 
   // Fallback to static seed data
@@ -99,8 +100,8 @@ export async function getEvents(category?: 'WEEKLY' | 'MONTHLY'): Promise<Progra
     const prisma = getPrismaClient();
     if (prisma) {
       const dbEvents = await prisma.event.findMany({
-        where: category ? { category } : undefined,
-        orderBy: { order: 'asc' },
+        where: { deletedAt: null, isPublished: true, status: { notIn: ['PAST', 'CANCELLED'] }, AND: [{ OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }] }], ...(category ? { category } : {}) },
+        orderBy: [{ isFeatured: 'desc' }, { order: 'asc' }],
         select: {
           id: true,
           title: true,
@@ -109,18 +110,19 @@ export async function getEvents(category?: 'WEEKLY' | 'MONTHLY'): Promise<Progra
           description: true,
           category: true,
           order: true,
+          status: true,
+          isFeatured: true,
         },
       });
 
-      if (dbEvents && dbEvents.length > 0) {
-        return dbEvents.map((e) => ({
-          ...e,
-          category: e.category as 'WEEKLY' | 'MONTHLY',
-        }));
-      }
+      return dbEvents.map((e) => ({
+        ...e,
+        category: e.category as 'WEEKLY' | 'MONTHLY',
+      }));
     }
   } catch (error) {
-    console.warn('[DataService] Database query failed for events, falling back:', error);
+    console.error('[DataService] Database query failed for events:', error);
+    return [];
   }
 
   return category
@@ -136,6 +138,7 @@ export async function getTeamMembers(): Promise<TeamMemberItem[]> {
     const prisma = getPrismaClient();
     if (prisma) {
       const dbTeam = await prisma.teamMember.findMany({
+        where: { deletedAt: null, isPublished: true, AND: [{ OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }] }] },
         orderBy: { order: 'asc' },
         select: {
           id: true,
@@ -147,12 +150,11 @@ export async function getTeamMembers(): Promise<TeamMemberItem[]> {
         },
       });
 
-      if (dbTeam && dbTeam.length > 0) {
-        return dbTeam;
-      }
+      return dbTeam;
     }
   } catch (error) {
-    console.warn('[DataService] Database query failed for team, falling back:', error);
+    console.error('[DataService] Database query failed for team:', error);
+    return [];
   }
 
   return initialTeam;
@@ -186,19 +188,16 @@ export async function saveContactMessage(
 
   try {
     const prisma = getPrismaClient();
-    if (prisma) {
-      await prisma.contactMessage.create({
-        data: {
-          name: data.name.trim(),
-          email: data.email.trim().toLowerCase(),
-          phone: data.phone?.trim() || null,
-          subject: data.subject?.trim() || 'General Inquiry',
-          message: data.message.trim(),
-        },
-      });
-    } else {
-      console.log('[Contact] Received message (offline store):', data);
-    }
+    if (!prisma) return { success: false, message: 'Messages cannot be saved right now. Please try again later.' };
+    await prisma.contactMessage.create({
+      data: {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone?.trim() || null,
+        subject: data.subject?.trim() || 'General Inquiry',
+        message: data.message.trim(),
+      },
+    });
 
     return {
       success: true,
@@ -237,19 +236,16 @@ export async function savePrayerRequest(
 
   try {
     const prisma = getPrismaClient();
-    if (prisma) {
-      await prisma.prayerRequest.create({
-        data: {
-          name: data.name.trim(),
-          email: data.email?.trim() || null,
-          phone: data.phone?.trim() || null,
-          request: data.request.trim(),
-          isPrivate: data.isPrivate ?? true,
-        },
-      });
-    } else {
-      console.log('[PrayerRequest] Received prayer request (offline store):', data);
-    }
+    if (!prisma) return { success: false, message: 'Prayer requests cannot be saved right now. Please try again later.' };
+    await prisma.prayerRequest.create({
+      data: {
+        name: data.name.trim(),
+        email: data.email?.trim() || null,
+        phone: data.phone?.trim() || null,
+        request: data.request.trim(),
+        isPrivate: data.isPrivate ?? true,
+      },
+    });
 
     return {
       success: true,
@@ -274,7 +270,7 @@ export async function getTestimonials(options?: {
   try {
     const prisma = getPrismaClient();
     if (prisma) {
-      const where: Record<string, unknown> = { isApproved: true };
+      const where: Record<string, unknown> = { isApproved: true, deletedAt: null, AND: [{ OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }] }] };
       if (options?.category && options.category !== 'ALL') {
         where.category = options.category;
       }
@@ -296,15 +292,14 @@ export async function getTestimonials(options?: {
         },
       });
 
-      if (dbTestimonials && dbTestimonials.length > 0) {
-        return dbTestimonials.map((t) => ({
-          ...t,
-          date: t.createdAt.toISOString().split('T')[0],
-        }));
-      }
+      return dbTestimonials.map((t) => ({
+        ...t,
+        date: t.createdAt.toISOString().split('T')[0],
+      }));
     }
   } catch (error) {
-    console.warn('[DataService] Database query failed for testimonials, falling back:', error);
+    console.error('[DataService] Database query failed for testimonials:', error);
+    return [];
   }
 
   // Fallback to in-memory list seeded with initialTestimonials
@@ -360,23 +355,19 @@ export async function saveTestimonial(
 
   try {
     const prisma = getPrismaClient();
-    if (prisma) {
-      const created = await prisma.testimonial.create({
-        data: {
-          name: newTestimonial.name,
-          locationOrRole: newTestimonial.locationOrRole,
-          category: newTestimonial.category,
-          title: newTestimonial.title,
-          story: newTestimonial.story,
-          scripture: newTestimonial.scripture,
-          isApproved: true,
-        },
-      });
-      newTestimonial.id = created.id;
-    }
-
-    // Always prepend to in-memory list for instant live availability
-    inMemoryTestimonials.unshift(newTestimonial);
+    if (!prisma) return { success: false, message: 'Your testimony could not be saved right now. Please try again later.' };
+    const created = await prisma.testimonial.create({
+      data: {
+        name: newTestimonial.name,
+        locationOrRole: newTestimonial.locationOrRole,
+        category: newTestimonial.category,
+        title: newTestimonial.title,
+        story: newTestimonial.story,
+        scripture: newTestimonial.scripture,
+        isApproved: true,
+      },
+    });
+    newTestimonial.id = created.id;
 
     return {
       success: true,
@@ -385,12 +376,9 @@ export async function saveTestimonial(
     };
   } catch (error) {
     console.error('[DataService] Error saving testimonial:', error);
-    // Even if DB fails, keep in-memory so user experience succeeds
-    inMemoryTestimonials.unshift(newTestimonial);
     return {
-      success: true,
-      message: 'Praise the Lord! Your testimony has been received and shared to glorify God and strengthen the faith of others.',
-      data: newTestimonial,
+      success: false,
+      message: 'Unable to save the testimony right now. Please try again shortly.',
     };
   }
 }
@@ -404,7 +392,37 @@ export async function getGalleryImages(options?: {
   limit?: number;
   search?: string;
 }): Promise<GalleryImageItem[]> {
-  let images = [...initialGalleryImages];
+  let images: GalleryImageItem[] = [...initialGalleryImages];
+
+  try {
+    const prisma = getPrismaClient();
+    if (!prisma) return images;
+    {
+      const dbImages = await prisma.galleryImage.findMany({
+        where: { deletedAt: null, isPublished: true, OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }] },
+        orderBy: [{ sortOrder: 'asc' }, { date: 'desc' }],
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          description: true,
+          imageUrl: true,
+          date: true,
+          location: true,
+        featured: true,
+          sortOrder: true,
+        },
+      });
+      images = dbImages.map((image) => ({
+        ...image,
+        category: image.category as GalleryImageItem['category'],
+        date: image.date.toISOString().split('T')[0],
+      }));
+    }
+  } catch (error) {
+    console.error('[DataService] Database query failed for gallery:', error);
+    images = [];
+  }
 
   if (options?.category && options.category !== 'ALL') {
     const cat = options.category.toUpperCase();
@@ -429,6 +447,7 @@ export async function getGalleryImages(options?: {
   images.sort((a, b) => {
     if (a.featured && !b.featured) return -1;
     if (!a.featured && b.featured) return 1;
+    if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
@@ -439,5 +458,138 @@ export async function getGalleryImages(options?: {
   return images;
 }
 
+export async function getChurchUpdates(options?: {
+  includeUnpublished?: boolean;
+  limit?: number;
+}): Promise<ChurchUpdateItem[]> {
+  try {
+    const prisma = getPrismaClient();
+    if (prisma) {
+      const updates = await prisma.churchUpdate.findMany({
+        where: options?.includeUnpublished ? { deletedAt: null } : { isPublished: true, deletedAt: null, AND: [{ OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }] }] },
+        orderBy: { publishedAt: 'desc' },
+        take: options?.limit ?? 50,
+      });
+
+      return updates.map((update) => ({
+        id: update.id,
+        title: update.title,
+        summary: update.summary,
+        content: update.content,
+        imageUrl: update.imageUrl,
+        publishedAt: update.publishedAt.toISOString(),
+        isPublished: update.isPublished,
+      }));
+    }
+  } catch (error) {
+    console.error('[DataService] Database query failed for church updates:', error);
+    return [];
+  }
+
+  return [];
+}
+
+export async function getAdminContentEntries() {
+  const prisma = getPrismaClient();
+  if (!prisma) {
+    return { updates: [], sermons: [], events: [], gallery: [], team: [], testimonials: [], activity: [], imageReferences: [], databaseAvailable: false };
+  }
+
+  try {
+    const [updates, sermons, events, gallery, team, testimonials, activity] = await Promise.all([
+      prisma.churchUpdate.findMany({ orderBy: { publishedAt: 'desc' } }),
+      prisma.sermon.findMany({ orderBy: { date: 'desc' } }),
+      prisma.event.findMany({ orderBy: { createdAt: 'desc' } }),
+      prisma.galleryImage.findMany({ orderBy: [{ sortOrder: 'asc' }, { date: 'desc' }] }),
+      prisma.teamMember.findMany({ orderBy: { createdAt: 'desc' } }),
+      prisma.testimonial.findMany({ orderBy: { createdAt: 'desc' } }),
+      prisma.adminActivity.findMany({ orderBy: { createdAt: 'desc' }, take: 8 }),
+    ]);
+    const [updateImages, galleryImages, teamImages] = await Promise.all([
+      prisma.churchUpdate.findMany({ where: { imageUrl: { not: null } }, select: { imageUrl: true } }),
+      prisma.galleryImage.findMany({ select: { imageUrl: true } }),
+      prisma.teamMember.findMany({ where: { imageUrl: { not: null } }, select: { imageUrl: true } }),
+    ]);
+    const imageReferences = [...updateImages, ...galleryImages, ...teamImages].map((image) => image.imageUrl).filter((url): url is string => Boolean(url));
+    return { updates, sermons, events, gallery, team, testimonials, activity, imageReferences, databaseAvailable: true };
+  } catch (error) {
+    console.warn('[DataService] Could not load admin content entries:', error);
+    return { updates: [], sermons: [], events: [], gallery: [], team: [], testimonials: [], activity: [], imageReferences: [], databaseAvailable: false };
+  }
+}
+
+export async function getAdminSubmissions() {
+  const prisma = getPrismaClient();
+  if (!prisma) return { contactMessages: [], prayerRequests: [], available: false };
+  try {
+    const [contactMessages, prayerRequests] = await Promise.all([
+      prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
+      prisma.prayerRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
+    ]);
+    return { contactMessages, prayerRequests, available: true };
+  } catch (error) {
+    console.warn('[DataService] Could not load admin submissions:', error);
+    return { contactMessages: [], prayerRequests: [], available: false };
+  }
+}
+
+export async function createChurchUpdate(
+  data: ChurchUpdateInput
+): Promise<FormSubmissionResult<ChurchUpdateItem>> {
+  const title = data.title?.trim();
+  const summary = data.summary?.trim();
+  const content = data.content?.trim();
+  const errors: Record<string, string[]> = {};
+
+  if (!title || title.length < 3) errors.title = ['Title must be at least 3 characters.'];
+  if (!summary || summary.length < 10) errors.summary = ['Summary must be at least 10 characters.'];
+  if (!content || content.length < 20) errors.content = ['Content must be at least 20 characters.'];
+
+  if (Object.keys(errors).length > 0) {
+    return { success: false, message: 'Please complete the required fields.', errors };
+  }
+
+  const publishedAt = data.publishedAt ? new Date(data.publishedAt) : new Date();
+  const publishAt = data.publishAt ? new Date(data.publishAt) : null;
+  if (Number.isNaN(publishedAt.getTime())) {
+    return { success: false, message: 'Please provide a valid publication date.' };
+  }
+
+  try {
+    const prisma = getPrismaClient();
+    if (!prisma) return { success: false, message: 'This update could not be saved because the database is unavailable.' };
+    {
+      const created = await prisma.churchUpdate.create({
+        data: {
+          title,
+          summary,
+          content,
+          imageUrl: data.imageUrl?.trim() || null,
+          publishedAt,
+          isPublished: data.isPublished ?? true,
+          publishAt,
+        },
+      });
+      return {
+        success: true,
+        message: 'Church update published successfully.',
+        data: {
+          id: created.id,
+          title: created.title,
+          summary: created.summary,
+          content: created.content,
+          imageUrl: created.imageUrl,
+          publishedAt: created.publishedAt.toISOString(),
+          isPublished: created.isPublished,
+        },
+      };
+    }
+
+    return { success: false, message: 'This update could not be saved.' };
+  } catch (error) {
+    console.error('[DataService] Error creating church update:', error);
+    return { success: false, message: 'Unable to save the church update right now.' };
+  }
+}
 
 
